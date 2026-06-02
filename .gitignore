@@ -1,0 +1,31 @@
+# Build directories
+build/
+bin/
+obj/
+cmake-build-*/
+
+# STM32 compiler outputs
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.o
+*.d
+*.su
+
+# IDE specific files
+.settings/
+Debug/
+Release/
+.vscode/ipch/
+.vscode/rg_state
+.vscode/definitions.json
+
+# CubeMX backups
+MX_Backup_*
+
+# Temporary and log files
+*.log
+.DS_Store
+Thumbs.db
