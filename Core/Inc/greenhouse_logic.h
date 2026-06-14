@@ -1,10 +1,10 @@
 /**
-  ******************************************************************************
-  * @file    greenhouse_logic.h
-  * @brief   Core business logic and RTOS task declarations for the greenhouse
-  *          control system. Define message structs and task entry points.
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    greenhouse_logic.h
+ * @brief   Deklaracje głównej logiki biznesowej, struktur danych oraz punktów
+ *          wejściowych zadań FreeRTOS sterownika szklarni.
+ ******************************************************************************
+ */
 
 #ifndef GREENHOUSE_LOGIC_H
 #define GREENHOUSE_LOGIC_H
@@ -16,17 +16,26 @@ extern "C" {
 #include "cmsis_os.h"
 #include "main.h"
 
-/* --- Configuration Macros --- */
+/* ========================================================================== */
+/* --- SEKCJA 1: USTAWIENIA CZASOWE I KONFIGURACJA (TEST vs PRODUKCJA) ---    */
+/* ========================================================================== */
 
-/* 
- * For simulation, we run the sensor reading task every 1 second (1000 ms) 
- * instead of 60 seconds (60000 ms). This allows observing 60/120 minute 
- * delays in 60/120 seconds in the terminal.
- * CHANGE to 60000 for production hardware deployment.
- */
+// Częstotliwość próbkowania czujników (Task_Read)
+// [TRYB TESTOWY]: 1000 ms (1 sekunda) - aby symulacja przebiegała szybko.
+// [TRYB DOCELOWY / PRODUKCJA]: 60000 ms (60 sekund) - zgodnie ze schematem.
 #define GREENHOUSE_READ_INTERVAL_MS   1000
 
-/* --- Mock Button and LED Pin Defines --- */
+// Czas trwania manualnego zraszania (uruchamianego z przycisku EXTI)
+// [TRYB TESTOWY]: 10000 ms (10 sekund) - na potrzeby prezentacji.
+// [TRYB DOCELOWY / PRODUKCJA]: 600000 ms (10 minut) - zgodnie ze schematem.
+#define MANUAL_WATERING_DURATION_MS   (10 * 1000)
+
+/* UWAGA O SYMULACJI: 
+   Obecnie czujniki (GetTemp1, itp.) w warstwie HAL zwracają wygenerowane liczby,
+   które powoli się zmieniają. Docelowo w funkcji Task_Read należy podpiąć 
+   rzeczywisty odczyt z ADC/I2C w pliku greenhouse_hal_wrapper.c. */
+
+// Domyślne mapowanie pinów przycisku i diody (w przypadku braku generacji w main.h)
 #ifndef BUTTON_Pin
 #define BUTTON_Pin                    GPIO_PIN_0
 #endif
@@ -36,53 +45,48 @@ extern "C" {
 #define LD3_GPIO_Port                 GPIOB
 #endif
 
-/* --- Data Structures --- */
+/* ========================================================================== */
+/* --- SEKCJA 2: STRUKTURY DANYCH ---                                        */
+/* ========================================================================== */
 
-/**
- * @brief Structure containing sensor readings in fixed-point format (tenths of units).
- *        E.g., 245 = 24.5C, 552 = 55.2%
- */
+// Struktura przechowująca pomiary z czujników w formacie stałoprzecinkowym.
+// Wartości pomnożone przez 10 (np. 245 = 24.5C, 552 = 55.2%).
+// Pozwala to na rezygnację z typu float na małym rdzeniu Cortex-M0.
 typedef struct {
-    int16_t temp1;       /**< Temperature from sensor 1 (Heater Logic) */
-    int16_t temp2;       /**< Temperature from sensor 2 (Average calc) */
-    int16_t temp3;       /**< Temperature from sensor 3 (Ventilation Flaps) */
-    uint16_t humidity;   /**< Soil/air humidity percentage (AUTO Watering) */
+    int16_t temp1;       // Temperatura z czujnika 1 (Logika Ogrzewania)
+    int16_t temp2;       // Temperatura z czujnika 2 (Używana do obliczania średniej)
+    int16_t temp3;       // Temperatura z czujnika 3 (Logika Klap Wentylacyjnych)
+    uint16_t humidity;   // Wilgotność powietrza/gleby (Logika Auto Podlewania)
 } Greenhouse_Sensors_t;
 
-/* --- RTOS Task Entry Points --- */
+/* ========================================================================== */
+/* --- SEKCJA 3: PUNKTY WEJŚCIOWE ZADAŃ RTOS ORAZ TIMERÓW ---                 */
+/* ========================================================================== */
 
-/**
- * @brief Task responsible for periodic polling of simulated/real sensors.
- *        Wakes up every GREENHOUSE_READ_INTERVAL_MS, reads data,
- *        and pushes it to the queue.
- */
+// Zadanie wątku odczytu czujników. Odpytuje sensory co określony interwał.
 void Task_Read_Rtn(void *argument);
 
-/**
- * @brief Main logic processing task. Waits for data in the message queue,
- *        processes environmental rules (heater, flaps, auto watering),
- *        and commands the actuators.
- */
+// Zadanie wątku głównego (logiki sterowania). Odbiera dane z kolejki i steruje wyjściami.
 void Task_Logic_Rtn(void *argument);
 
-/**
- * @brief Software timer callback function. Automatically triggered when the
- *        manual watering timer expires (after 10 minutes) to turn off watering.
- */
+// Callback wywoływany przez timer one-shot po zakończeniu podlewania manualnego.
 void ManualWateringTimer_Callback(void *argument);
 
-/**
- * @brief Software timer callback function. Wakes up every 100ms to blink the
- *        green LED (LD3) based on the state of the actuators.
- */
+// Okresowy callback (100ms) realizujący miganie diody statusowej (LD3).
 void LEDTimer_Callback(void *argument);
 
-/* --- Actuator State Getters --- */
+/* ========================================================================== */
+/* --- SEKCJA 4: GETTERY STANU AKTUATORÓW ---                                 */
+/* ========================================================================== */
+
 uint8_t Greenhouse_Logic_GetHeaterState(void);
 uint8_t Greenhouse_Logic_GetFlapsState(void);
 uint8_t Greenhouse_Logic_GetWateringState(void);
 
-/* --- External handles to CMSIS RTOS V2 objects (defined in freertos.c) --- */
+/* ========================================================================== */
+/* --- SEKCJA 5: ZASOBY SYSTEMOWE (UCHWYTY FREERTOS) ---                     */
+/* ========================================================================== */
+
 extern osMessageQueueId_t greenhouseQueueHandle;
 extern osTimerId_t manualWateringTimerHandle;
 extern osTimerId_t ledTimerHandle;

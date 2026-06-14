@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Project",
+            "type": "shell",
+            "command": "cmake --build build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Flash Project",
+            "type": "shell",
+            "command": "openocd -f board/st_nucleo_f0.cfg -c \"program build/Debug/STM_freertos_szklarania.elf verify reset exit\"",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        }
+    ]
+}

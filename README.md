@@ -8,7 +8,7 @@ Projekt został zoptymalizowany pod kątem ekstremalnie małych zasobów sprzęt
 
 ## 📌 CZĘŚĆ I: Instrukcja Użytkowa i Uruchomieniowa
 
-### 🔌 Wymagania Sprzętowe i Połączenia
+### 🔌 Wymagania SprzętoweP i Połączenia
 Do uruchomienia projektu wymagana jest płytka deweloperska **NUCLEO-F031K6**.
 *   **Komunikacja UART**: Wbudowany programator ST-LINK przekierowuje port USART1 na wirtualny port szeregowy (VCP) komputera poprzez kabel USB.
     *   **TX**: Pin `PA2`

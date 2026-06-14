@@ -47,10 +47,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-/* Static allocation control blocks and stacks for FreeRTOS objects to fit in the 4KB RAM */
+// Statyczna alokacja bloków kontrolnych (TCB) oraz stosów dla obiektów FreeRTOS.
+// Jest to konieczne, aby zmieścić się w skrajnie małym RAM-ie mikrokontrolera (4KB).
 
-/* Definitions for readTask (Static)
-   Stack size reduced to 48 words (192 bytes) to meet strict RAM limit (<95%) */
+// Konfiguracja readTask (statyczna alokacja)
+// Stos zredukowany do 48 słów (192 bajty), by oszczędzić pamięć SRAM.
 osThreadId_t readTaskHandle;
 static uint32_t readTaskStack[48];
 static StaticTask_t readTaskControlBlock;
@@ -63,8 +64,8 @@ const osThreadAttr_t readTask_attributes = {
   .priority = (osPriority_t) osPriorityNormal,
 };
 
-/* Definitions for greenhouseQueue (Static)
-   Length reduced to 2 elements to minimize static memory consumption. */
+// Konfiguracja kolejki pomiarowej greenhouseQueue (statyczna alokacja)
+// Rozmiar zredukowany do 2 elementów, aby zminimalizować statyczne zużycie pamięci.
 osMessageQueueId_t greenhouseQueueHandle;
 static uint8_t greenhouseQueueBuffer[2 * sizeof(Greenhouse_Sensors_t)];
 static StaticQueue_t greenhouseQueueControlBlock;
@@ -76,7 +77,7 @@ const osMessageQueueAttr_t greenhouseQueue_attributes = {
   .mq_size = sizeof(greenhouseQueueBuffer),
 };
 
-/* Definitions for manualWateringTimer (Static) */
+// Konfiguracja timera manualWateringTimer (statyczna alokacja)
 osTimerId_t manualWateringTimerHandle;
 static StaticTimer_t manualWateringTimerControlBlock;
 const osTimerAttr_t manualWateringTimer_attributes = {
@@ -85,8 +86,7 @@ const osTimerAttr_t manualWateringTimer_attributes = {
   .cb_size = sizeof(manualWateringTimerControlBlock),
 };
 
-/* Definitions for ledTimer (Static)
-   Timer runs periodically every 100ms to drive status indicator LED */
+// Konfiguracja timera ledTimer do sterowania miganiem diody (statyczna alokacja)
 osTimerId_t ledTimerHandle;
 static StaticTimer_t ledTimerControlBlock;
 const osTimerAttr_t ledTimer_attributes = {
@@ -95,7 +95,7 @@ const osTimerAttr_t ledTimer_attributes = {
   .cb_size = sizeof(ledTimerControlBlock),
 };
 
-/* Definitions for uartMutex (Static) */
+// Konfiguracja mutexu uartMutex (statyczna alokacja)
 osMutexId_t uartMutexHandle;
 static StaticSemaphore_t uartMutexControlBlock;
 const osMutexAttr_t uartMutex_attributes = {
@@ -104,7 +104,7 @@ const osMutexAttr_t uartMutex_attributes = {
   .cb_size = sizeof(uartMutexControlBlock),
 };
 
-/* Definitions for buttonSemaphore (Static) */
+// Konfiguracja semafora buttonSemaphore (statyczna alokacja)
 osSemaphoreId_t buttonSemaphoreHandle;
 static StaticSemaphore_t buttonSemaphoreControlBlock;
 const osSemaphoreAttr_t buttonSemaphore_attributes = {
@@ -112,7 +112,8 @@ const osSemaphoreAttr_t buttonSemaphore_attributes = {
   .cb_mem = &buttonSemaphoreControlBlock,
   .cb_size = sizeof(buttonSemaphoreControlBlock),
 };
-/* Static allocation variables for defaultTask */
+
+// Zmienne statycznej alokacji dla domyślnego zadania logicznego
 static uint32_t defaultTaskStack[100];
 static StaticTask_t defaultTaskControlBlock;
 /* USER CODE END Variables */
@@ -147,16 +148,15 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-  /* Create static Mutex to protect UART serial communications */
+  // Tworzymy statyczny Mutex zabezpieczający komunikację UART przed wyścigami wątków
   uartMutexHandle = osMutexNew(&uartMutex_attributes);
   if (uartMutexHandle == NULL) {
-      /* Fallback logging will be used, which is safe */
+      /* W przypadku błędu system będzie pisał na UART bezpośrednio (awaryjnie) */
   }
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* Create static Binary Semaphore for EXTI button interrupt synchronization.
-     Initialized to 0 tokens. */
+  // Statyczny semafor binarny do synchronizacji przerwania przycisku EXTI PA0 z wątkiem logiki
   buttonSemaphoreHandle = osSemaphoreNew(1, 0, &buttonSemaphore_attributes);
   if (buttonSemaphoreHandle == NULL) {
       UART_Log("CRITICAL ERROR: Failed to create button binary semaphore!");
@@ -164,13 +164,13 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-  /* Create software timer for manual watering. Runs as a one-shot 10-minute timer. */
+  // Timer programowy do podlewania ręcznego (one-shot, wyłączy podlewanie po upływie czasu)
   manualWateringTimerHandle = osTimerNew(ManualWateringTimer_Callback, osTimerOnce, NULL, &manualWateringTimer_attributes);
   if (manualWateringTimerHandle == NULL) {
       UART_Log("CRITICAL ERROR: Failed to create manual watering timer!");
   }
 
-  /* Create and start periodic software timer for LED blinking (100ms period) to save RAM */
+  // Okresowy timer programowy (100ms) obsługujący miganie diody statusowej LED
   ledTimerHandle = osTimerNew(LEDTimer_Callback, osTimerPeriodic, NULL, &ledTimer_attributes);
   if (ledTimerHandle != NULL) {
       osTimerStart(ledTimerHandle, pdMS_TO_TICKS(100));
@@ -180,7 +180,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* Create message queue for sensor values. Capacity is 2 items of Greenhouse_Sensors_t. */
+  // Kolejka komunikatów przekazująca odczyty czujników z readTask do defaultTask
   greenhouseQueueHandle = osMessageQueueNew(2, sizeof(Greenhouse_Sensors_t), &greenhouseQueue_attributes);
   if (greenhouseQueueHandle == NULL) {
       UART_Log("CRITICAL ERROR: Failed to create greenhouse message queue!");
@@ -192,13 +192,13 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* Create reading task */
+  // Uruchomienie wątku odczytującego pomiary środowiskowe
   readTaskHandle = osThreadNew(Task_Read_Rtn, NULL, &readTask_attributes);
   if (readTaskHandle == NULL) {
       UART_Log("CRITICAL ERROR: Failed to create read task!");
   }
   
-  /* Direct boot diagnostics to UART */
+  // Diagnostyka początkowa (Boot Check) wypisywana bezpośrednio na UART przy starcie jądra
   HAL_UART_Transmit(&huart1, (uint8_t*)"\r\n--- BOOT CHECK ---\r\n", 22, HAL_MAX_DELAY);
   if (uartMutexHandle == NULL) HAL_UART_Transmit(&huart1, (uint8_t*)"[ERR] uartMutex is NULL!\r\n", 26, HAL_MAX_DELAY);
   else HAL_UART_Transmit(&huart1, (uint8_t*)"[OK] uartMutex is created\r\n", 27, HAL_MAX_DELAY);
@@ -240,8 +240,8 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  /* We reuse CubeMX's default task to run the main control logic.
-     This saves us from allocating stack and TCB memory for a separate logic task. */
+  // Przekazujemy sterowanie do naszej pętli logiki sterowania szklarni.
+  // Ponowne użycie domyślnego zadania pozwala uniknąć narzutu kolejnego stosu wątku.
   Task_Logic_Rtn(argument);
   /* USER CODE END StartDefaultTask */
 }

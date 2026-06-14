@@ -4,7 +4,7 @@
         {
             "name": "Debug STM32 (OpenOCD)",
             "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/build/STM_freertos_szklarania.elf",
+            "executable": "${workspaceFolder}/build/Debug/STM_freertos_szklarania.elf",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
@@ -13,8 +13,8 @@
             "configFiles": [
                 "board/st_nucleo_f0.cfg"
             ],
-            "armToolchainPath": "C:/Users/Julek/AppData/Roaming/xPacks/@xpack-dev-tools/arm-none-eabi-gcc/15.2.1-1.1.1/.content/bin",
-            "openOCDPath": "C:/Users/Julek/AppData/Roaming/xPacks/@xpack-dev-tools/openocd/0.12.0-7.1/.content/bin/openocd.exe"
+            "gdbPath": "/usr/bin/gdb-multiarch",
+            "preLaunchTask": "CMake: build"
         }
     ]
 }

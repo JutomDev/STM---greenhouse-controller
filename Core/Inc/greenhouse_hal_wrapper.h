@@ -1,11 +1,10 @@
 /**
-  ******************************************************************************
-  * @file    greenhouse_hal_wrapper.h
-  * @brief   Hardware Abstraction Layer (HAL) wrapper declarations for the
-  *          greenhouse control system. Provides mock interfaces for sensors,
-  *          actuators, and system logging.
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    greenhouse_hal_wrapper.h
+ * @brief   Deklaracje warstwy abstrakcji sprzętu (HAL Wrapper) dla sterownika szklarni.
+ *          Definiuje interfejsy dla czujników, aktuatorów oraz obsługi UART.
+ ******************************************************************************
+ */
 
 #ifndef GREENHOUSE_HAL_WRAPPER_H
 #define GREENHOUSE_HAL_WRAPPER_H
@@ -17,110 +16,84 @@ extern "C" {
 #include <stdint.h>
 #include "cmsis_os.h"
 
-/* --- External Mutex Handle --- */
+/* ========================================================================== */
+/* --- SEKCJA 1: UCHWYTY ZASOBÓW SYSTEMOWYCH ---                             */
+/* ========================================================================== */
+
 extern osMutexId_t uartMutexHandle;
 
-/* --- Sensor Readings --- */
+/* ========================================================================== */
+/* --- SEKCJA 2: INTERFEJSY ODCZYTU CZUJNIKÓW ---                             */
+/* ========================================================================== */
 
-/**
- * @brief Get temperature from sensor 1 (used for heater control).
- * @return Temperature in tenths of degrees Celsius (e.g. 245 = 24.5C).
- */
+// Odczyt temperatury z czujnika 1 (używany do sterowania piecem).
+// Wartość w dziesiątych częściach stopnia Celsjusza (np. 245 = 24.5C).
 int16_t GetTemp1(void);
 
-/**
- * @brief Get temperature from sensor 2 (used for average temperature calculations).
- * @return Temperature in tenths of degrees Celsius.
- */
+// Odczyt temperatury z czujnika 2 (używany do liczenia średniej).
+// Wartość w dziesiątych częściach stopnia Celsjusza.
 int16_t GetTemp2(void);
 
-/**
- * @brief Get temperature from sensor 3 (used for air flaps control).
- * @return Temperature in tenths of degrees Celsius.
- */
+// Odczyt temperatury z czujnika 3 (używany do sterowania klapami).
+// Wartość w dziesiątych częściach stopnia Celsjusza.
 int16_t GetTemp3(void);
 
-/**
- * @brief Get relative humidity from soil/air sensor.
- * @return Relative humidity in tenths of percentage (e.g. 552 = 55.2%).
- */
+// Odczyt wilgotności gleby/powietrza.
+// Wartość w dziesiątych częściach procenta (np. 552 = 55.2%).
 uint16_t GetHumidity(void);
 
+/* ========================================================================== */
+/* --- SEKCJA 3: STEROWANIE AKTUALTORAMI ---                                 */
+/* ========================================================================== */
 
-/* --- Actuator Controls --- */
-
-/**
- * @brief Turn the heating system ON.
- */
+// Załączenie systemu ogrzewania (piec).
 void HeaterOn(void);
 
-/**
- * @brief Turn the heating system OFF.
- */
+// Wyłączenie systemu ogrzewania (piec).
 void HeaterOff(void);
 
-/**
- * @brief Open the greenhouse air ventilation flaps.
- */
+// Otwarcie klap wentylacyjnych.
 void AirFlapsOpen(void);
 
-/**
- * @brief Close the greenhouse air ventilation flaps.
- */
+// Zamknięcie klap wentylacyjnych.
 void AirFlapsClose(void);
 
-/**
- * @brief Turn the watering system (sprinklers) ON.
- */
+// Załączenie zraszaczy (podlewanie).
 void WateringOn(void);
 
-/**
- * @brief Turn the watering system (sprinklers) OFF.
- */
+// Wyłączenie zraszaczy (podlewanie).
 void WateringOff(void);
 
+/* ========================================================================== */
+/* --- SEKCJA 4: INTERFEJS UŻYTKOWNIKA (PRZYCISKI) ---                        */
+/* ========================================================================== */
 
-/* --- User Inputs --- */
-
-/**
- * @brief Read state of the manual watering button.
- * @return 1 if pressed, 0 otherwise.
- */
+// Odczyt stanu fizycznego/symulowanego przycisku podlewania.
+// 1 - wciśnięty, 0 - zwolniony.
 uint8_t IsWateringButtonPressed(void);
 
+/* ========================================================================== */
+/* --- SEKCJA 5: OBSŁUGA UART (LOGOWANIE) ---                                */
+/* ========================================================================== */
 
-/* --- Communication / Logging --- */
-
-/**
- * @brief Log a system status or warning message via UART.
- * @param msg Null-terminated string containing the log message.
- */
+// Wysyła komunikat na port UART z automatyczną blokadą wątkową (mutex).
 void UART_Log(const char* msg);
 
-/**
- * @brief Lock the UART mutex to protect shared static buffers and serial lines.
- */
+// Blokada mutexu portu UART (przydatne do składania złożonych linii).
 void UART_Log_Lock(void);
 
-/**
- * @brief Unlock the UART mutex after logging is completed.
- */
+// Zwolnienie mutexu portu UART.
 void UART_Log_Unlock(void);
 
-/**
- * @brief Directly write to UART bypass-locking (caller must already hold the mutex).
- * @param msg Null-terminated string containing the log message.
- */
+// Bezpośredni zapis na UART (wymaga wcześniejszej blokady mutexu).
 void UART_Log_Direct(const char* msg);
 
+/* ========================================================================== */
+/* --- SEKCJA 6: SYMULATOR ---                                                */
+/* ========================================================================== */
 
-/* --- Simulation Control --- */
-
-/**
- * @brief Perform a single step of the simulation. This updates the simulated sensor
- *        values and inputs to verify the system logic dynamically in the terminal.
- *        Called automatically in the sensor reading task.
- */
+// Wykonuje krok symulatora środowiska czujników. Aktualizuje wbudowane
+// stany symulowane pod kątem testów w terminalu.
 void Greenhouse_HAL_SimulateStep(void);
 
 #ifdef __cplusplus

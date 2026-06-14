@@ -1,11 +1,7 @@
 {
-    "cmake.environment": {
-        "PATH": "C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\ninja-build\\1.13.1-1.1\\.content\\bin;C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\arm-none-eabi-gcc\\15.2.1-1.1.1\\.content\\bin;C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\openocd\\0.12.0-7.1\\.content\\bin;${env:PATH}"
-    },
-    "terminal.integrated.env.windows": {
-        "PATH": "C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\ninja-build\\1.13.1-1.1\\.content\\bin;C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\arm-none-eabi-gcc\\15.2.1-1.1.1\\.content\\bin;C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\openocd\\0.12.0-7.1\\.content\\bin;${env:PATH}"
-    },
-    "stm32-for-vscode.openOCDPath": "C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\openocd\\0.12.0-7.1\\.content\\bin\\openocd.exe",
-    "stm32-for-vscode.makePath": "C:\\Users\\Julek\\AppData\\Roaming\\xPacks\\@xpack-dev-tools\\ninja-build\\1.13.1-1.1\\.content\\bin\\ninja.exe",
-    "stm32-for-vscode.armToolchainPath": false
+    "stm32-for-vscode.openOCDPath": "/usr/bin/openocd",
+    "stm32-for-vscode.makePath": "/usr/bin/make",
+    "stm32-for-vscode.armToolchainPath": "/usr/bin",
+    "cortex-debug.armToolchainPath": "/usr/bin",
+    "cortex-debug.openocdPath": "/usr/bin/openocd"
 }

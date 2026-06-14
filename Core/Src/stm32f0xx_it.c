@@ -88,18 +88,19 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-  /* Disable all interrupts to prevent re-entry, then indicate fault via LED.
-     This bare-metal loop works even when FreeRTOS stacks are corrupted. */
+  // Wyłączamy wszystkie przerwania, aby zapobiec ponownemu wejściu w obsługę błędu
+  // i wchodzimy w pętlę awaryjną. Zadziała to nawet przy uszkodzonym stosie RTOS.
   __disable_irq();
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* Rapid 10Hz blink on PB3 (LD3) — no HAL, no RTOS, pure register access.
-       GPIOB ODR bit 3 toggled via BSRR (set) and BRR (reset) for atomic access. */
-    GPIOB->BSRR = GPIO_PIN_3;               /* LED ON  */
+    // Bardzo szybkie miganie diodą PB3 (LD3) z częstotliwością ok. 10 Hz.
+    // Zapisujemy bezpośrednio do rejestrów BSRR i BRR portu GPIOB, aby nie polegać
+    // na bibliotece HAL ani na schedulerze FreeRTOS, które mogły ulec zablokowaniu.
+    GPIOB->BSRR = GPIO_PIN_3;               /* Włącz LED */
     for (volatile uint32_t d = 0; d < 40000; d++) {}
-    GPIOB->BRR  = GPIO_PIN_3;               /* LED OFF */
+    GPIOB->BRR  = GPIO_PIN_3;               /* Wyłącz LED */
     for (volatile uint32_t d = 0; d < 40000; d++) {}
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
