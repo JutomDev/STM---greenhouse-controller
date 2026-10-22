@@ -175,3 +175,9 @@ Key operational parameters can be adjusted directly in header and source definit
 * Sensor sample period: `GREENHOUSE_READ_INTERVAL_MS` in `Core/Inc/greenhouse_logic.h` (default: `1000` ms for testing; configure to `60000` ms for production).
 * Manual watering duration: `MANUAL_WATERING_DURATION_MS` in `Core/Src/greenhouse_logic.c` (default: `10000` ms for testing; configure to `600000` ms for production).
 * UART baud rate: `huart1.Init.BaudRate` in `Core/Src/usart.c` (configured at `38400` baud).
+
+---
+
+## 6. Target Porting & Migration Guide
+For detailed instructions on porting this firmware from the resource-constrained Cortex-M0 (STM32F031) architecture to high-performance Cortex-M7 / Cortex-M4 platforms (e.g. Nucleo-F767ZI) under STM32CubeIDE, consult the technical migration manual:
+* [docs/MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) — Covers NVIC priority grouping, FPU stack sizing, and cache coherency rules.
