@@ -1,10 +1,15 @@
-# Build directories
+# ==============================================================================
+# Build Artefacts & Toolchain Outputs
+# ==============================================================================
 build/
 bin/
 obj/
-cmake-build-*/
-
-# STM32 compiler outputs
+out/
+.pio/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile.bak
 *.elf
 *.bin
 *.hex
@@ -13,8 +18,13 @@ cmake-build-*/
 *.o
 *.d
 *.su
+*.obj
+*.srec
 
-# IDE specific files
+# ==============================================================================
+# Clangd, Language Servers & IDE Caches
+# ==============================================================================
+.cache/
 .settings/
 Debug/
 Release/
@@ -22,10 +32,40 @@ Release/
 .vscode/rg_state
 .vscode/definitions.json
 
-# CubeMX backups
-MX_Backup_*
+# ==============================================================================
+# AI Assistants, Agent Configurations & Chat Transcripts
+# ==============================================================================
+.agents/
+AGENTS.md
+GEMINI.md
+.gemini/
+.cursor/
+.cursorignore
+*CZAT*
+*czat*
+*chat*
+*Chat*
+*transcript*
+*.transcript
+*prompt*
 
-# Temporary and log files
+# ==============================================================================
+# Environment, Credentials & Private Configuration
+# ==============================================================================
+.env
+.env.*
+*.env
+.stm32env
+*secret*
+*secrets*
+*.pem
+*.key
+
+# ==============================================================================
+# OS & CubeMX Backups
+# ==============================================================================
 *.log
 .DS_Store
 Thumbs.db
+MX_Backup_*
+

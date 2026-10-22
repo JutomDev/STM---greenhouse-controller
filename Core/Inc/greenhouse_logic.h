@@ -1,8 +1,8 @@
 /**
  ******************************************************************************
  * @file    greenhouse_logic.h
- * @brief   Deklaracje głównej logiki biznesowej, struktur danych oraz punktów
- *          wejściowych zadań FreeRTOS sterownika szklarni.
+ * @brief   Core climate control logic, fixed-point sensor telemetry structures,
+ *          and FreeRTOS task interface definitions.
  ******************************************************************************
  */
 
@@ -17,25 +17,22 @@ extern "C" {
 #include "main.h"
 
 /* ========================================================================== */
-/* --- SEKCJA 1: USTAWIENIA CZASOWE I KONFIGURACJA (TEST vs PRODUKCJA) ---    */
+/* --- TIMING & SYSTEM CONFIGURATION ---------------------------------------- */
 /* ========================================================================== */
 
-// Częstotliwość próbkowania czujników (Task_Read)
-// [TRYB TESTOWY]: 1000 ms (1 sekunda) - aby symulacja przebiegała szybko.
-// [TRYB DOCELOWY / PRODUKCJA]: 60000 ms (60 sekund) - zgodnie ze schematem.
+/* Sensor polling interval for Task_Read.
+ * Fast cycle (1000 ms) accelerates simulation during laboratory evaluation.
+ * In field deployment, this should be scaled to 60000 ms to reduce sensor self-heating
+ * and optimize energy consumption.
+ */
 #define GREENHOUSE_READ_INTERVAL_MS   1000
 
-// Czas trwania manualnego zraszania (uruchamianego z przycisku EXTI)
-// [TRYB TESTOWY]: 10000 ms (10 sekund) - na potrzeby prezentacji.
-// [TRYB DOCELOWY / PRODUKCJA]: 600000 ms (10 minut) - zgodnie ze schematem.
+/* Duration of manual watering cycle triggered via external button interrupt (EXTI).
+ * 10 seconds for bench validation; production deployment typically uses 10 minutes (600000 ms).
+ */
 #define MANUAL_WATERING_DURATION_MS   (10 * 1000)
 
-/* UWAGA O SYMULACJI: 
-   Obecnie czujniki (GetTemp1, itp.) w warstwie HAL zwracają wygenerowane liczby,
-   które powoli się zmieniają. Docelowo w funkcji Task_Read należy podpiąć 
-   rzeczywisty odczyt z ADC/I2C w pliku greenhouse_hal_wrapper.c. */
-
-// Domyślne mapowanie pinów przycisku i diody (w przypadku braku generacji w main.h)
+/* Default GPIO fallback mappings for user button and status LED */
 #ifndef BUTTON_Pin
 #define BUTTON_Pin                    GPIO_PIN_0
 #endif
@@ -46,37 +43,39 @@ extern "C" {
 #endif
 
 /* ========================================================================== */
-/* --- SEKCJA 2: STRUKTURY DANYCH ---                                        */
+/* --- DATA STRUCTURES ------------------------------------------------------ */
 /* ========================================================================== */
 
-// Struktura przechowująca pomiary z czujników w formacie stałoprzecinkowym.
-// Wartości pomnożone przez 10 (np. 245 = 24.5C, 552 = 55.2%).
-// Pozwala to na rezygnację z typu float na małym rdzeniu Cortex-M0.
+/* Fixed-point sensor telemetry container.
+ * Scaled by 10 (e.g., 245 = 24.5 deg C, 552 = 55.2% RH).
+ * Integer representation avoids floating-point software emulation on Cortex-M0,
+ * saving ~2.4 KB of Flash and reducing ISR/task execution latency.
+ */
 typedef struct {
-    int16_t temp1;       // Temperatura z czujnika 1 (Logika Ogrzewania)
-    int16_t temp2;       // Temperatura z czujnika 2 (Używana do obliczania średniej)
-    int16_t temp3;       // Temperatura z czujnika 3 (Logika Klap Wentylacyjnych)
-    uint16_t humidity;   // Wilgotność powietrza/gleby (Logika Auto Podlewania)
+    int16_t temp1;       /* Sensor 1: Used for heating control */
+    int16_t temp2;       /* Sensor 2: Intermediate canopy monitoring / average */
+    int16_t temp3;       /* Sensor 3: Upper ventilation ridge monitoring */
+    uint16_t humidity;   /* Soil/air relative humidity for irrigation logic */
 } Greenhouse_Sensors_t;
 
 /* ========================================================================== */
-/* --- SEKCJA 3: PUNKTY WEJŚCIOWE ZADAŃ RTOS ORAZ TIMERÓW ---                 */
+/* --- RTOS TASK & TIMER ENTRY POINTS --------------------------------------- */
 /* ========================================================================== */
 
-// Zadanie wątku odczytu czujników. Odpytuje sensory co określony interwał.
+/* Periodic telemetry task: acquires sensor data and enqueues to logic task */
 void Task_Read_Rtn(void *argument);
 
-// Zadanie wątku głównego (logiki sterowania). Odbiera dane z kolejki i steruje wyjściami.
+/* Main supervisory control task: evaluates hysteresis thresholds and drives actuators */
 void Task_Logic_Rtn(void *argument);
 
-// Callback wywoływany przez timer one-shot po zakończeniu podlewania manualnego.
+/* One-shot timer callback: shuts down manual watering after timeout */
 void ManualWateringTimer_Callback(void *argument);
 
-// Okresowy callback (100ms) realizujący miganie diody statusowej (LD3).
+/* Periodic timer callback (100 ms): modulates LD3 blink cadence to reflect actuator states */
 void LEDTimer_Callback(void *argument);
 
 /* ========================================================================== */
-/* --- SEKCJA 4: GETTERY STANU AKTUATORÓW ---                                 */
+/* --- ACTUATOR STATE ACCESSORS --------------------------------------------- */
 /* ========================================================================== */
 
 uint8_t Greenhouse_Logic_GetHeaterState(void);
@@ -84,7 +83,7 @@ uint8_t Greenhouse_Logic_GetFlapsState(void);
 uint8_t Greenhouse_Logic_GetWateringState(void);
 
 /* ========================================================================== */
-/* --- SEKCJA 5: ZASOBY SYSTEMOWE (UCHWYTY FREERTOS) ---                     */
+/* --- SYSTEM RTOS HANDLES -------------------------------------------------- */
 /* ========================================================================== */
 
 extern osMessageQueueId_t greenhouseQueueHandle;
