@@ -46,7 +46,7 @@ Memory Footprint Summary (Debug Build, GCC 15.2.1):
 
 ```mermaid
 graph TD
-    subgraph Hardware_And_Interrupts [Hardware & Interrupt Layer]
+    subgraph Hardware_And_Interrupts [Hardware and Interrupt Layer]
         Sensors["Sensors / Simulator"]
         Button["Button Pin PA0 (EXTI0)"]
         LED["Status LED PB3 (LD3)"]
@@ -65,19 +65,19 @@ graph TD
     end
 
     Sensors -->|Telemetry Sample| ReadTask
-    ReadTask -->|osMessageQueuePut (Timeout: 100ms)| Queue
-    Button -->|Falling Edge IRQ| EXTI_ISR["HAL_GPIO_EXTI_Callback()"]
+    ReadTask -->|osMessageQueuePut - 100ms timeout| Queue
+    Button -->|Falling Edge IRQ| EXTI_ISR["HAL_GPIO_EXTI_Callback"]
     EXTI_ISR -->|osSemaphoreRelease| Sem
 
-    Queue -->|osMessageQueueGet (Timeout: 100ms)| LogicTask
-    Sem -->|osSemaphoreAcquire (Non-blocking: 0ms)| LogicTask
+    Queue -->|osMessageQueueGet - 100ms timeout| LogicTask
+    Sem -->|osSemaphoreAcquire - non-blocking| LogicTask
 
-    LogicTask -->|Start / Reset| WaterTimer
-    WaterTimer -->|Timeout Callback| WaterCB["ManualWateringTimer_Callback()"]
+    LogicTask -->|Start or Reset| WaterTimer
+    WaterTimer -->|Timeout Callback| WaterCB["ManualWateringTimer_Callback"]
     WaterCB -->|Clear Manual Flag| LogicTask
 
     LogicTask -->|Update Actuator State Flags| LEDTimer
-    LEDTimer -->|100ms Tick Callback| LEDCB["LEDTimer_Callback()"]
+    LEDTimer -->|100ms Tick Callback| LEDCB["LEDTimer_Callback"]
 
     LogicTask -->|Discrete Commands| Actuators
     LEDCB -->|Blink Pattern Output| LED
